@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoX</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="chat-container">
+ <aside class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="newChatBtn"><i class="fa-solid fa-plus"></i> Novi čet</button>
+            </div>
+            <div class="sidebar-history" id="chatListContainer">
+                <p class="history-title">Nedavno</p>
+                </div>
+        </aside>
+
+        <main class="chat-main">
+            <header class="chat-header">
+                <div class="logo">ZoX <span class="model-badge">1.0</span></div>
+                <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+            </header>
+
+            <section class="messages-container" id="messagesContainer">
+                <div class="message bot-message">
+                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="text">Ćao! Ja sam tvoj asistent. Kako se zoveš da bismo mogli bolje da komuniciramo?</div>
+                </div>
+            </section>
+
+            <footer class="chat-input-area">
+              <form id="chatForm" class="input-wrapper">
+    <label for="imageInput" class="image-upload-btn">
+        <i class="fa-regular fa-image"></i>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    
+    <input type="text" id="userInput" placeholder="Unesite poruku ili zakačite sliku..." autocomplete="off" required>
+    <button type="submit" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+</form>
+                <p class="disclaimer">ChatBot može prikazati netačne informacije, pa proverite važne odgovore.</p>
+            </footer>
+        </main>
+    </div>
+
+
+    <div id="editModal" class="custom-modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Promeni ime razgovora</h3>
+            <input type="text" id="modalInput" placeholder="Unesi novo ime...">
+            <div class="modal-actions">
+                <button id="modalCancelBtn" class="modal-btn cancel">Otkaži</button>
+                <button id="modalSaveBtn" class="modal-btn save">Sačuvaj</button>
+            </div>
+        </div>
+    </div>
+<script type="module" src="index.js"></script>
+</body>
+</html>
