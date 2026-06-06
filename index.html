@@ -33,9 +33,12 @@
             <div class="sidebar-header">
                 <button class="new-chat-btn" id="newChatBtn"><i class="fa-solid fa-plus"></i> Novi čet</button>
             </div>
+            <button id="changeNameBtn" class="action-btn">Promeni ime</button>
             <div class="sidebar-history" id="chatListContainer">
                 <p class="history-title">Nedavno</p>
                 </div>
+    <button id="logoutBtn">Odjava</button>
+
         </aside>
 
         <main class="chat-main">
@@ -77,6 +80,23 @@
             </div>
         </div>
     </div>
+
+
+<div id="authModal" class="auth-modal">
+    <div class="auth-box">
+        <h3>ZoX ChatBot Authentication</h3>
+        <input type="email" id="emailInput" placeholder="Email">
+        <input type="password" id="passInput" placeholder="Lozinka">
+        
+        <input type="text" id="usernameInput" placeholder="Tvoje ime (samo za registraciju)" style="display: none;">
+        
+        <button id="authBtn">PRIJAVI SE</button>
+        
+        <button id="showRegisterBtn" style="background: none; border: none; color: #666; font-size: 12px; cursor: pointer; text-decoration: underline;">
+            Nemam nalog - Registracija
+        </button>
+    </div>
+</div>
 <script type="module" src="index.js"></script>
 </body>
 </html>
