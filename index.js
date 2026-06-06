@@ -1,4 +1,26 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { API_KEY } from './config.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCdDvvdwj_hZqRIZIpk_-4d6i5NnK_zFLE",
+    authDomain: "zox-chatbot.firebaseapp.com",
+    projectId: "zox-chatbot",
+    storageBucket: "zox-chatbot.firebasestorage.app",
+    messagingSenderId: "260561423422",
+    appId: "1:260561423422:web:3ae21b4a0f14b714c6556f",
+    measurementId: "G-JGXXPVY9H7"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app); // SADA RADI jer app postoji
+    let userName = localStorage.getItem("userName") || null;
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const chatForm = document.getElementById("chatForm");
@@ -9,10 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const newChatBtn = document.getElementById("newChatBtn");
     const chatListContainer = document.getElementById("chatListContainer");
 
-    // const API_KEY = "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";
     
 
-    let userName = localStorage.getItem("userName") || null;
+    // let userName = localStorage.getItem("userName") || null;
     let selectedImageBase64 = null;
     let selectedImageMimeType = null;
 
@@ -41,46 +62,82 @@ document.addEventListener("DOMContentLoaded", () => {
         loadChatMessages(currentChatId);
     }
 
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        document.getElementById("authModal").style.display = "none";
+        
+        // 1. Proveri da li ime već postoji u memoriji
+        let savedName = localStorage.getItem("userName");
+        
+        if (savedName) {
+            userName = savedName;
+        } else {
+            // 2. Ako ne postoji, povuci ga iz Firestore baze
+            try {
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    userName = docSnap.data().username;
+                    localStorage.setItem("userName", userName);
+                } else {
+                    // Ako korisnik postoji ali nema ime u bazi (stari nalog), koristi email
+                    userName = user.email.split('@')[0];
+                }
+            } catch (error) {
+                console.error("Greška pri čitanju iz baze:", error);
+                userName = user.email.split('@')[0];
+            }
+        }
+        
+        // 3. Učitaj četove za ovog korisnika
+        const storageKey = `zox_chats_${user.uid}`;
+        chats = JSON.parse(localStorage.getItem(storageKey)) || {};
+        currentChatId = localStorage.getItem(`zox_current_chat_id_${user.uid}`) || null;
+        
+        initChats();
+
+        if (currentChatId) {
+            loadChatMessages(currentChatId);
+        }
+    } else {
+        document.getElementById("authModal").style.display = "flex";
+    }
+});
 
     function zatvoriMeni() {
     const sidebarElement = document.querySelector(".sidebar");
     const chatContainer = document.querySelector(".chat-container");
     
-    // Uklanjamo klase koje pomeraju layout
     if (sidebarElement) sidebarElement.classList.remove("open");
     if (chatContainer) chatContainer.classList.remove("sidebar-open");
 }
 
-    function createNewChat(title = "Novi razgovor") {
-        const chatId = "chat_" + Date.now();
-        chats[chatId] = {
-            id: chatId,
-            title: title,
-            messages: []
-        };
 
-        zatvoriMeni();
-        
-        const uvodniTekst = userName 
-            ? `Pozdrav, <strong>${formatujIme(userName)}</strong>. Šta radimo danas? Tu sam za kod, jednačine, sastave ili bleju.`
-            : "Ćao! Ja sam tvoj asistent Zox. Kako se zoveš da bismo mogli lakše da radimo?";
-        
-        chats[chatId].messages.push({
-            text: uvodniTekst,
-            sender: "bot",
-            imageSrc: null
-        });
 
-        currentChatId = chatId;
-        saveChatsToLocalStorage();
-        renderChatList();
-        loadChatMessages(currentChatId);
+function createNewChat(title = "Novi razgovor") {
+    const chatId = "chat_" + Date.now();
+    chats[chatId] = {
+        id: chatId,
+        title: title,
+        messages: []
+    };
+
+    zatvoriMeni();
+    currentChatId = chatId;
+    saveChatsToLocalStorage();
+    renderChatList();
+    
+    loadChatMessages(currentChatId);
+}
+
+ function saveChatsToLocalStorage() {
+    if (auth.currentUser) {
+        const uid = auth.currentUser.uid;
+        localStorage.setItem(`zox_chats_${uid}`, JSON.stringify(chats));
+        localStorage.setItem(`zox_current_chat_id_${uid}`, currentChatId);
     }
-
-    function saveChatsToLocalStorage() {
-        localStorage.setItem("zox_chats", JSON.stringify(chats));
-        localStorage.setItem("zox_current_chat_id", currentChatId);
-    }
+}
 
     function renderChatList() {
         if (!chatListContainer) return;
@@ -120,68 +177,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // document.addEventListener("click", (e) => {
-    //     const chatTarget = e.target.closest(".history-item-left");
-    //     if (chatTarget) {
-    //         const id = chatTarget.getAttribute("data-id");
-    //         currentChatId = id;
-    //         saveChatsToLocalStorage();
-    //         renderChatList();
-    //         loadChatMessages(currentChatId);
-            
-    //         if (window.innerWidth <= 768) {
-    //             document.querySelector(".sidebar").classList.remove("open");
-    //         }
-    //         return;
-    //     }
-
-    //     const editTarget = e.target.closest(".edit-chat");
-    //     if (editTarget) {
-    //         e.preventDefault();
-    //         const id = editTarget.getAttribute("data-id");
-    //         aktivniChatIdZaEdit = id;
-            
-    //         const modal = document.getElementById("editModal");
-    //         const modalInput = document.getElementById("modalInput");
-            
-    //         if (modal && modalInput) {
-    //             modalInput.value = chats[id].title;
-    //             modal.style.display = "flex";
-    //             modalInput.focus();
-    //         }
-    //         return;
-    //     }
-
-    //     const deleteTarget = e.target.closest(".delete-chat");
-    //     if (deleteTarget) {
-    //         e.preventDefault();
-    //         const id = deleteTarget.getAttribute("data-id");
-            
-    //         if (confirm(`Da li sigurno želiš da obrišeš razgovor "${chats[id].title}"?`)) {
-    //             delete chats[id];
-                
-    //             if (currentChatId === id) {
-    //                 const preostaliIds = Object.keys(chats);
-    //                 if (preostaliIds.length > 0) {
-    //                     currentChatId = preostaliIds[preostaliIds.length - 1];
-    //                 } else {
-    //                     createNewChat("Glavni razgovor");
-    //                     return;
-    //                 }
-    //             }
-                
-    //             saveChatsToLocalStorage();
-    //             renderChatList();
-    //             loadChatMessages(currentChatId);
-    //         }
-    //         return;
-    //     }
-    // });
 
 
 
     document.addEventListener("click", (e) => {
-        // --- KLIK NA ISTORIJU ---
         const chatTarget = e.target.closest(".history-item-left");
         if (chatTarget) {
             const id = chatTarget.getAttribute("data-id");
@@ -271,19 +270,32 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    function loadChatMessages(chatId) {
-        messagesContainer.innerHTML = "";
-        const currentChat = chats[chatId];
-        if (!currentChat) return;
 
-        currentChat.messages.forEach(msg => {
-            appendMessageToDOM(msg.text, msg.sender, msg.imageSrc);
-        });
+
+
+
+
+function loadChatMessages(chatId) {
+    messagesContainer.innerHTML = "";
+    const currentChat = chats[chatId];
+    
+    if (!currentChat || currentChat.messages.length === 0) {
+        messagesContainer.classList.add("empty-chat");
         
-        if (window.MathJax && window.MathJax.typesetPromise) {
-            window.MathJax.typesetPromise();
-        }
+        // Ovde koristimo globalnu promenljivu 'userName' 
+        // koja se ažurira čim se korisnik uloguje
+        const imeZaPozdrav = localStorage.getItem("userName") || "Prijatelju";
+        
+        messagesContainer.innerHTML = `
+            <div class="empty-chat-text"> Spreman, ${imeZaPozdrav}?<br>Šta istražujemo danas?
+            </div>
+        `;
+    } else {
+        messagesContainer.classList.remove("empty-chat");
+        currentChat.messages.forEach(msg => appendMessageToDOM(msg.text, msg.sender, msg.imageSrc));
     }
+}
+
 
     function saveMessageToHistory(text, sender, imageSrc = null) {
         if (chats[currentChatId]) {
@@ -312,41 +324,74 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.readAsDataURL(file);
     });
 
+    // chatForm.addEventListener("submit", async (e) => {
+    //     e.preventDefault();
+    //     const messageText = userInput.value.trim();
+
+    //     if (!messageText && !selectedImageBase64) return;
+
+    //     const userImgSrc = selectedImageBase64 ? `data:${selectedImageMimeType};base64,${selectedImageBase64}` : null;
+        
+    //     appendMessageToDOM(messageText, "user", userImgSrc);
+    //     saveMessageToHistory(messageText, "user", userImgSrc);
+
+    //     userInput.value = "";
+    //     userInput.placeholder = "Unesite poruku ili zakačite sliku...";
+
+    //     if (!userName) {
+    //         handleNameSetup(messageText);
+    //         return;
+    //     }
+
+    //     saveMessageToHistory(messageText, "user", userImgSrc);
+
+    //     const textLower = messageText.toLowerCase();
+    //     if (textLower.includes("zaboravi me") || textLower.includes("promeni ime")) {
+    //         localStorage.removeItem("userName");
+    //         userName = null;
+    //         appendMessageDOMAndHistory("U redu, zaboravio sam tvoje ime. Kako se sada zoveš?", "bot");
+    //         return;
+    //     }
+
+    //     const imgToSend = selectedImageBase64;
+    //     const mimeToSend = selectedImageMimeType;
+
+    //     selectedImageBase64 = null;
+    //     selectedImageMimeType = null;
+    //     imageInput.value = "";
+
+    //     loadChatMessages(currentChatId);
+
+    //     await fetchGroqResponse(messageText, imgToSend, mimeToSend);
+    // });
+
+
+
     chatForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const messageText = userInput.value.trim();
-
         if (!messageText && !selectedImageBase64) return;
 
         const userImgSrc = selectedImageBase64 ? `data:${selectedImageMimeType};base64,${selectedImageBase64}` : null;
         
+        // 1. Čisto dodavanje u DOM i istoriju (SAMO JEDNOM)
         appendMessageToDOM(messageText, "user", userImgSrc);
         saveMessageToHistory(messageText, "user", userImgSrc);
+        
+        // 2. Osveži UI odmah da nestane "empty-chat"
+        loadChatMessages(currentChatId);
 
         userInput.value = "";
-        userInput.placeholder = "Unesite poruku ili zakačite sliku...";
-
+        
         if (!userName) {
             handleNameSetup(messageText);
             return;
         }
 
-        const textLower = messageText.toLowerCase();
-        if (textLower.includes("zaboravi me") || textLower.includes("promeni ime")) {
-            localStorage.removeItem("userName");
-            userName = null;
-            appendMessageDOMAndHistory("U redu, zaboravio sam tvoje ime. Kako se sada zoveš?", "bot");
-            return;
-        }
-
-        const imgToSend = selectedImageBase64;
-        const mimeToSend = selectedImageMimeType;
-
+        await fetchGroqResponse(messageText, selectedImageBase64, selectedImageMimeType);
+        
         selectedImageBase64 = null;
         selectedImageMimeType = null;
-        imageInput.value = "";
-
-        await fetchGroqResponse(messageText, imgToSend, mimeToSend);
     });
 
     function handleNameSetup(text) {
@@ -496,6 +541,137 @@ function closeSidebar() {
     }
 }
 
+
+
+// Kada korisnik kuca email, proveri da li postoji (opciono)
+// Ili jednostavno, dodaj dugme "Nemam nalog" u HTML
+// Koje će raditi ovo:
+document.getElementById("showRegisterBtn").onclick = () => {
+    document.getElementById("usernameInput").style.display = "block";
+};
+
+
+document.getElementById("authBtn").addEventListener("click", async () => {
+    const email = document.getElementById("emailInput").value;
+    const username = document.getElementById("usernameInput").value;
+    const password = document.getElementById("passInput").value;
+    
+    // Provera: ako polje za ime NIJE vidljivo, ne zahtevaj ga
+    const isRegistering = document.getElementById("usernameInput").style.display === "block";
+    
+    if (!email || !password || (isRegistering && !username)) {
+        return alert("Popuni obavezna polja!");
+    }
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        document.getElementById("authModal").style.display = "none";
+    } catch (e) {
+        if(e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+            // Ako pokušava registraciju
+            if (!isRegistering) return alert("Nalog nije pronađen. Klikni 'Registracija' ako praviš novi.");
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", userCredential.user.uid), { username: username });
+                localStorage.setItem("userName", username);
+                alert("Dobrodošao, " + username);
+                document.getElementById("authModal").style.display = "none";
+            } catch (regError) {
+                alert("Greška pri registraciji: " + regError.message);
+            }
+        } else {
+            alert("Greška: " + e.message);
+        }
+    }
 });
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    try {
+        await signOut(auth); // Ovo briše trenutnu sesiju u Firebase-u
+        localStorage.removeItem("userName"); // Brišemo i lokalne podatke
+        location.reload(); // Osvežavamo stranicu da se modal ponovo pokrene
+    } catch (error) {
+        console.error("Greška pri odjavi:", error);
+    }
+});
+
+
+document.getElementById("showRegisterBtn").addEventListener("click", () => {
+    document.getElementById("usernameInput").style.display = "block";
+    document.getElementById("showRegisterBtn").style.display = "none";
+});
+
+
+async function azurirajKorisnickoIme(novoIme) {
+    if (!auth.currentUser) return;
+    
+    try {
+        // 1. Ažuriraj u Firestore bazi
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await setDoc(userRef, { username: novoIme }, { merge: true });
+        
+        // 2. Ažuriraj lokalno
+        userName = novoIme;
+        localStorage.setItem("userName", novoIme);
+        
+        // 3. Osveži prikaz (da se ime odmah promeni u poruci "Spreman, Ime?")
+        loadChatMessages(currentChatId);
+        alert("Ime uspešno promenjeno!");
+    } catch (error) {
+        console.error("Greška pri promeni imena:", error);
+    }
+}
+
+
+
+
+});
+
+
+// document.addEventListener("click", (e) => {
+//     if (e.target && e.target.id === 'changeNameBtn') {
+//         console.log("Klik detektovan na dugmetu!");
+        
+//         alert("Ako vidiš ovo, dugme radi!");
+        
+//         const novoIme = prompt("Unesi novo korisničko ime:", userName || "");
+//         if (novoIme !== null && novoIme.trim() !== "") {
+//             azurirajKorisnickoIme(novoIme.trim());
+//         }
+//     }
+// });
+
+
+// document.addEventListener("click", (e) => {
+//     if (e.target && e.target.id === 'changeNameBtn') {
+//         const modal = document.getElementById("editModal");
+//         const modalInput = document.getElementById("modalInput");
+        
+//         modalInput.value = userName || "";
+//         modal.style.display = "flex";
+        
+//         // Postavi flag da znamo šta menjamo
+//         modal.dataset.mode = "change-username"; 
+//     }
+//     modalSaveBtn.onclick = () => {
+//             const novoIme = modalInput.value.trim();
+            
+//             // Provera da li menjamo ime korisnika ili ime četa
+//             if (modal.dataset.mode === "change-username") {
+//                 if (novoIme) azurirajKorisnickoIme(novoIme);
+//             } else {
+//                 // Logika za promenu imena četa
+//                 if (novoIme !== "" && aktivniChatIdZaEdit) {
+//                     chats[aktivniChatIdZaEdit].title = novoIme;
+//                     saveChatsToLocalStorage();
+//                     renderChatList();
+//                 }
+//             }
+            
+//             modal.style.display = "none";
+//             modal.dataset.mode = ""; // Resetuj flag
+//         };
+// });
+
 
 
