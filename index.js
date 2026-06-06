@@ -41,6 +41,16 @@ document.addEventListener("DOMContentLoaded", () => {
         loadChatMessages(currentChatId);
     }
 
+
+    function zatvoriMeni() {
+    const sidebarElement = document.querySelector(".sidebar");
+    const chatContainer = document.querySelector(".chat-container");
+    
+    // Uklanjamo klase koje pomeraju layout
+    if (sidebarElement) sidebarElement.classList.remove("open");
+    if (chatContainer) chatContainer.classList.remove("sidebar-open");
+}
+
     function createNewChat(title = "Novi razgovor") {
         const chatId = "chat_" + Date.now();
         chats[chatId] = {
@@ -48,6 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
             title: title,
             messages: []
         };
+
+        zatvoriMeni();
         
         const uvodniTekst = userName 
             ? `Pozdrav, <strong>${formatujIme(userName)}</strong>. Šta radimo danas? Tu sam za kod, jednačine, sastave ili bleju.`
@@ -108,7 +120,68 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // document.addEventListener("click", (e) => {
+    //     const chatTarget = e.target.closest(".history-item-left");
+    //     if (chatTarget) {
+    //         const id = chatTarget.getAttribute("data-id");
+    //         currentChatId = id;
+    //         saveChatsToLocalStorage();
+    //         renderChatList();
+    //         loadChatMessages(currentChatId);
+            
+    //         if (window.innerWidth <= 768) {
+    //             document.querySelector(".sidebar").classList.remove("open");
+    //         }
+    //         return;
+    //     }
+
+    //     const editTarget = e.target.closest(".edit-chat");
+    //     if (editTarget) {
+    //         e.preventDefault();
+    //         const id = editTarget.getAttribute("data-id");
+    //         aktivniChatIdZaEdit = id;
+            
+    //         const modal = document.getElementById("editModal");
+    //         const modalInput = document.getElementById("modalInput");
+            
+    //         if (modal && modalInput) {
+    //             modalInput.value = chats[id].title;
+    //             modal.style.display = "flex";
+    //             modalInput.focus();
+    //         }
+    //         return;
+    //     }
+
+    //     const deleteTarget = e.target.closest(".delete-chat");
+    //     if (deleteTarget) {
+    //         e.preventDefault();
+    //         const id = deleteTarget.getAttribute("data-id");
+            
+    //         if (confirm(`Da li sigurno želiš da obrišeš razgovor "${chats[id].title}"?`)) {
+    //             delete chats[id];
+                
+    //             if (currentChatId === id) {
+    //                 const preostaliIds = Object.keys(chats);
+    //                 if (preostaliIds.length > 0) {
+    //                     currentChatId = preostaliIds[preostaliIds.length - 1];
+    //                 } else {
+    //                     createNewChat("Glavni razgovor");
+    //                     return;
+    //                 }
+    //             }
+                
+    //             saveChatsToLocalStorage();
+    //             renderChatList();
+    //             loadChatMessages(currentChatId);
+    //         }
+    //         return;
+    //     }
+    // });
+
+
+
     document.addEventListener("click", (e) => {
+        // --- KLIK NA ISTORIJU ---
         const chatTarget = e.target.closest(".history-item-left");
         if (chatTarget) {
             const id = chatTarget.getAttribute("data-id");
@@ -117,21 +190,21 @@ document.addEventListener("DOMContentLoaded", () => {
             renderChatList();
             loadChatMessages(currentChatId);
             
+            // OVO JE KLJUČNO: Zatvaramo meni čim klikneš na čet
             if (window.innerWidth <= 768) {
-                document.querySelector(".sidebar").classList.remove("open");
+                closeSidebar();
             }
             return;
         }
 
+        // --- KLIK NA EDIT ---
         const editTarget = e.target.closest(".edit-chat");
         if (editTarget) {
             e.preventDefault();
             const id = editTarget.getAttribute("data-id");
             aktivniChatIdZaEdit = id;
-            
             const modal = document.getElementById("editModal");
             const modalInput = document.getElementById("modalInput");
-            
             if (modal && modalInput) {
                 modalInput.value = chats[id].title;
                 modal.style.display = "flex";
@@ -140,14 +213,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // --- KLIK NA DELETE ---
         const deleteTarget = e.target.closest(".delete-chat");
         if (deleteTarget) {
             e.preventDefault();
             const id = deleteTarget.getAttribute("data-id");
-            
             if (confirm(`Da li sigurno želiš da obrišeš razgovor "${chats[id].title}"?`)) {
                 delete chats[id];
-                
                 if (currentChatId === id) {
                     const preostaliIds = Object.keys(chats);
                     if (preostaliIds.length > 0) {
@@ -157,7 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
                 }
-                
                 saveChatsToLocalStorage();
                 renderChatList();
                 loadChatMessages(currentChatId);
@@ -409,6 +480,22 @@ if (logoBtn && sidebarElement) {
         }
     });
 }
+
+
+function closeSidebar() {
+    const chatContainer = document.querySelector(".chat-container");
+    const mainChat = document.querySelector(".chat-main");
+
+    if (chatContainer) {
+        chatContainer.classList.remove("sidebar-open");
+    }
+    
+    // DIREKTAN RESET: Ako klasa nije vratila element, uradi ovo:
+    if (mainChat) {
+        mainChat.style.transform = "translateX(0)";
+    }
+}
+
 });
 
 
