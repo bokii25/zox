@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initChats();
 
+    
     function initChats() {
         if (Object.keys(chats).length === 0) {
             createNewChat("Glavni razgovor");
@@ -395,17 +396,19 @@ async function fetchGroqResponse(userText, base64Image = null, mimeType = null) 
         return messageDiv;
     }
 
-    const logoBtn = document.querySelector(".logo");
-    const sidebarElement = document.querySelector(".sidebar");
+const logoBtn = document.querySelector(".logo");
+const sidebarElement = document.querySelector(".sidebar");
+const chatContainer = document.querySelector(".chat-container"); // Dodaj ovo
 
-    if (logoBtn && sidebarElement) {
-        logoBtn.addEventListener("click", (e) => {
-            if (window.innerWidth <= 768) {
-                e.stopPropagation();
-                sidebarElement.classList.toggle("open");
-            }
-        });
-    }
+if (logoBtn && sidebarElement) {
+    logoBtn.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768) {
+            e.stopPropagation();
+            sidebarElement.classList.toggle("open");
+            chatContainer.classList.toggle("sidebar-open"); // Ovo pokreće animaciju
+        }
+    });
+}
 });
 
 
