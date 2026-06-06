@@ -555,8 +555,18 @@ body {
 } */
 
 
-@media (max-width: 768px) {
-    /* Uklonjen :has() - sada koristimo klasu direktno */
+/* Osigurava da se sidebar uvek vrati na mesto */
+.sidebar {
+    transition: transform 0.3s ease-in-out !important;
+}
+
+/* Kada nije "open", osiguravamo da je sakriven */
+.sidebar:not(.open) {
+    transform: translateX(0) !important; /* Resetuje poziciju */
+}
+
+
+/* @media (max-width: 768px) {
     .sidebar-open .chat-main {
         transform: translateX(260px) !important;
     }
@@ -582,7 +592,38 @@ body {
     .sidebar.open {
         transform: translateX(260px) !important;
     }
+} */
+
+
+@media (max-width: 768px) {
+    /* Kada je meni OTVOREN */
+    .sidebar-open .sidebar {
+        transform: translateX(260px) !important;
+    }
+    
+    .sidebar-open .chat-main {
+        transform: translateX(260px) !important;
+    }
+
+    /* Osnovno stanje (ZATVORENO) */
+    .sidebar {
+        position: fixed !important;
+        left: -260px !important;
+        top: 0 !important;
+        height: 100% !important;
+        transition: transform 0.3s ease-in-out !important;
+    }
+
+    .chat-main {
+        transform: translateX(0) !important;
+        transition: transform 0.3s ease-in-out !important;
+    }
+
+
+
 }
+
+
 
 
 
