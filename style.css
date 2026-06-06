@@ -18,7 +18,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-body {
+/* body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     display: flex;
@@ -37,6 +37,22 @@ body {
     position: relative;
     left: 0;
     transition: left 0.3s ease-in-out;
+} */
+
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    height: 100%; /* Promeni iz 100vh */
+    overflow: hidden;
+}
+
+.chat-container {
+    width: 100%;
+    height: 100dvh; /* dinamički viewport height - ovo rešava probleme sa mobilnim browserima */
+    display: flex;
+    position: relative;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -505,7 +521,7 @@ body {
     to { opacity: 1; transform: scale(1); }
 }
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     .chat-header .logo {
         cursor: pointer !important;
         user-select: none;
@@ -535,5 +551,71 @@ body {
 
     .sidebar.open {
         transform: translateX(260px) !important;
+    }
+} */
+
+
+@media (max-width: 768px) {
+    /* Uklonjen :has() - sada koristimo klasu direktno */
+    .sidebar-open .chat-main {
+        transform: translateX(260px) !important;
+    }
+
+    .chat-main {
+        width: 100vw !important;
+        flex-shrink: 0;
+        transition: transform 0.3s ease-in-out !important;
+    }
+
+    .sidebar {
+        position: fixed !important;
+        top: 60px !important; 
+        left: -260px !important; 
+        width: 260px !important;
+        height: calc(100vh - 60px) !important;
+        z-index: 9999 !important;
+        background-color: #110e18 !important;
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease-in-out !important;
+    }
+
+    .sidebar.open {
+        transform: translateX(260px) !important;
+    }
+}
+
+
+
+/* --- SREDJEN RESPONSIVE INPUT --- */
+@media (max-width: 450px) {
+    .input-wrapper {
+        display: grid !important;
+        /* Kolone: ikonica za sliku (35px), input (popunjava ostatak), dugme za slanje (40px) */
+        grid-template-columns: 35px 1fr 40px !important;
+        align-items: center !important;
+        gap: 5px !important;
+        width: 100% !important;
+        padding: 4px 6px !important;
+        margin: 0 !important;
+    }
+
+    .image-upload-btn {
+        width: 35px !important;
+        font-size: 1.1rem !important;
+    }
+
+    .input-wrapper input[type="text"] {
+        width: 100% !important;
+        min-width: 0 !important; /* Ovo je ključno da se ne spljošti */
+        padding: 8px 4px !important;
+        font-size: 14px !important;
+    }
+
+    #sendBtn {
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 0.9rem !important;
+        flex-shrink: 0 !important; /* Ovo garantuje da se dugme ne skuplja */
+        margin: 0 !important;
     }
 }
